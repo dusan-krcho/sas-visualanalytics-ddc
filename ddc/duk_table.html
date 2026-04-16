@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VA Data-Driven Table</title>
+
+  <!-- SAS VA utilities -->
+  <script src="utils/messagingUtil.js"></script>
+  <script src="utils/contentUtil.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 10px;
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #f4f6f8;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background-color: white;
+    }
+
+    thead {
+      background-color: #111827;
+      color: white;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    tbody tr:nth-child(odd) {
+      background-color: #f9fafb;
+    }
+
+    tbody tr:hover {
+      background-color: #eef2ff;
+    }
+  </style>
+</head>
+<body>
+
+  <table id="vaTable">
+    <thead></thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+  let table = document.getElementById("vaTable");
+  let thead = table.querySelector("thead");
+  let tbody = table.querySelector("tbody");
+
+  /**
+   * Build table header from VA metadata
+   */
+  function buildHeader(columns) {
+    thead.innerHTML = "";
+    const headerRow = document.createElement("tr");
+
+    columns.forEach(col => {
+      const th = document.createElement("th");
+      th.textContent = col.label || col.name;
+      headerRow.appendChild(th);
+    });
+
+    thead.appendChild(headerRow);
+  }
+
+  /**
+   * Build table body from VA data
+   */
+  function buildBody(data) {
+    tbody.innerHTML = "";
+
+    data.forEach(row => {
+      const tr = document.createElement("tr");
+
+      row.forEach(cell => {
+        const td = document.createElement("td");
+        td.textContent = cell === null ? "" : cell;
+        tr.appendChild(td);
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  /**
+   * Handle data updates from VA
+   */
+  function onDataReceived(message) {
+    if (!message || !message.data) {
+      return;
+    }
+
+    const columns = message.data.columns;
+    const rows = message.data.data;
+
+    buildHeader(columns);
+    buildBody(rows);
+  }
+
+  /**
+   * Initialize VA content object
+   */
+  va.messagingUtil.setOnDataMessage(onDataReceived);
+
+  va.contentUtil.setupResizeListener(() => {
+    // Optional: handle resize if needed
+  });
+
+</script>
+
+</body>
+</html>
+``
