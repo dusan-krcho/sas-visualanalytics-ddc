@@ -192,7 +192,8 @@
    * Initialize VA integration
    * ----------------------------- */
   showNoDataMessage();
-  va.messagingUtil.setOnDataMessage(onDataReceived);
+  <!-- va.messagingUtil.setOnDataMessage(onDataReceived); -->
+  va.messagingUtil.setOnDataReceivedCallback(onDataReceived);
   va.contentUtil.setupResizeListener(() => {});
 </script>
 
