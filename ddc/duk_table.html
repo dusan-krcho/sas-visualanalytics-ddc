@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>VA Data-Driven Table</title>
+  <title>VA Table With Selection</title>
 
-  <!-- SAS VA utilities -->
-  <script src="utils/messagingUtil.js"></script>
-  <script src="utils/contentUtil.js"></script>
+  <!-- SAS VA Utilities (local relative paths) -->
+  <script src="./utils/messagingUtil.js"></script>
+  <script src="./utils/contentUtil.js"></script>
 
   <style>
     body {
@@ -16,10 +16,24 @@
       background-color: #f4f6f8;
     }
 
+    .message {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 120px;
+      background-color: #ffffff;
+      border: 1px dashed #d1d5db;
+      border-radius: 6px;
+      color: #6b7280;
+      font-size: 16px;
+    }
+
     table {
+      display: none;
       border-collapse: collapse;
       width: 100%;
-      background-color: white;
+      background-color: #ffffff;
     }
 
     thead {
@@ -30,8 +44,8 @@
     th, td {
       padding: 8px 10px;
       border-bottom: 1px solid #e5e7eb;
-      text-align: left;
       font-size: 13px;
+      text-align: left;
     }
 
     tbody tr:nth-child(odd) {
@@ -40,44 +54,80 @@
 
     tbody tr:hover {
       background-color: #eef2ff;
+      cursor: pointer;
+    }
+
+    tbody tr.selected {
+      background-color: #c7d2fe !important;
     }
   </style>
 </head>
 <body>
 
+  <!-- Messages -->
+  <div id="assignMessage" class="message">Assign a data first.</div>
+  <div id="noDataMessage" class="message">No data returned.</div>
+
+  <!-- Data-driven table -->
   <table id="vaTable">
     <thead></thead>
     <tbody></tbody>
   </table>
 
 <script>
-  let table = document.getElementById("vaTable");
-  let thead = table.querySelector("thead");
-  let tbody = table.querySelector("tbody");
+  const table = document.getElementById("vaTable");
+  const thead = table.querySelector("thead");
+  const tbody = table.querySelector("tbody");
 
-  /**
-   * Build table header from VA metadata
-   */
+  const assignMessage = document.getElementById("assignMessage");
+  const noDataMessage = document.getElementById("noDataMessage");
+
+  let selectedRowIndex = null;
+
+  /* -----------------------------
+   * Utility functions
+   * ----------------------------- */
+  function showAssignMessage() {
+    assignMessage.style.display = "flex";
+    noDataMessage.style.display = "none";
+    table.style.display = "none";
+  }
+
+  function showNoDataMessage() {
+    assignMessage.style.display = "none";
+    noDataMessage.style.display = "flex";
+    table.style.display = "none";
+  }
+
+  function showTable() {
+    assignMessage.style.display = "none";
+    noDataMessage.style.display = "none";
+    table.style.display = "table";
+  }
+
+  /* -----------------------------
+   * Build table header
+   * ----------------------------- */
   function buildHeader(columns) {
     thead.innerHTML = "";
-    const headerRow = document.createElement("tr");
+    const tr = document.createElement("tr");
 
     columns.forEach(col => {
       const th = document.createElement("th");
       th.textContent = col.label || col.name;
-      headerRow.appendChild(th);
+      tr.appendChild(th);
     });
 
-    thead.appendChild(headerRow);
+    thead.appendChild(tr);
   }
 
-  /**
-   * Build table body from VA data
-   */
-  function buildBody(data) {
+  /* -----------------------------
+   * Build table body
+   * ----------------------------- */
+  function buildBody(rows) {
     tbody.innerHTML = "";
 
-    data.forEach(row => {
+    rows.forEach((row, index) => {
       const tr = document.createElement("tr");
 
       row.forEach(cell => {
@@ -86,36 +136,64 @@
         tr.appendChild(td);
       });
 
+      tr.addEventListener("click", () => selectRow(index, tr));
       tbody.appendChild(tr);
     });
   }
 
-  /**
-   * Handle data updates from VA
-   */
+  /* -----------------------------
+   * Row selection + VA feedback
+   * ----------------------------- */
+  function selectRow(index, rowElement) {
+    clearSelection();
+
+    selectedRowIndex = index;
+    rowElement.classList.add("selected");
+
+    va.messagingUtil.postSelectionMessage({
+      selection: {
+        type: "byIndex",
+        values: [index]
+      }
+    });
+  }
+
+  function clearSelection() {
+    Array.from(tbody.children).forEach(tr =>
+      tr.classList.remove("selected")
+    );
+    selectedRowIndex = null;
+  }
+
+  /* -----------------------------
+   * Handle data messages from VA
+   * ----------------------------- */
   function onDataReceived(message) {
-    if (!message || !message.data) {
+    if (!message || !message.data || !message.data.columns) {
+      showAssignMessage();
       return;
     }
 
-    const columns = message.data.columns;
-    const rows = message.data.data;
+    const rows = message.data.data || [];
 
-    buildHeader(columns);
+    if (rows.length === 0) {
+      showNoDataMessage();
+      return;
+    }
+
+    showTable();
+    buildHeader(message.data.columns);
     buildBody(rows);
+    clearSelection();
   }
 
-  /**
-   * Initialize VA content object
-   */
+  /* -----------------------------
+   * Initialize VA integration
+   * ----------------------------- */
+  showAssignMessage();
   va.messagingUtil.setOnDataMessage(onDataReceived);
-
-  va.contentUtil.setupResizeListener(() => {
-    // Optional: handle resize if needed
-  });
-
+  va.contentUtil.setupResizeListener(() => {});
 </script>
 
 </body>
 </html>
-``
