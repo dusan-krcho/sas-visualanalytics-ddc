@@ -145,6 +145,14 @@
   va.contentUtil.setupResizeListener(() => {});
   */
   
+  function sendNoDataMessage(resultName) {
+       var message = {
+           resultName: resultName,
+           message: "No data items are assigned.\nThis visual requires 1 category and 2 measures."
+       };
+       sendMessage(message);
+   }
+  
   if (window.addEventListener) {
        // For standards-compliant web browsers
        window.addEventListener("message", onMessage, false);
