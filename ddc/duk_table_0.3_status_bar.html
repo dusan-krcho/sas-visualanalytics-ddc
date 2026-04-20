@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VA Table With Status</title>
+
+  <!-- SAS VA utilities -->
+  <!--
+  <script src="./utils/messagingUtil.js"></script>
+  <script src="./utils/contentUtil.js"></script>
+	-->
+  <style>
+    body {
+      margin: 0;
+      padding: 10px;
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #f4f6f8;
+    }
+
+    /* Status bar */
+    #statusBar {
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #1f2937;
+      background-color: #e5e7eb;
+      border-radius: 6px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background-color: white;
+      display: none;
+    }
+
+    thead {
+      background-color: #111827;
+      color: white;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    tbody tr:nth-child(odd) {
+      background-color: #f9fafb;
+    }
+
+    tbody tr:hover {
+      background-color: #eef2ff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Always visible status text -->
+  <div id="statusBar">No assignment</div>
+
+  <!-- Data-driven table -->
+  <table id="vaTable">
+    <thead></thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+  const statusBar = document.getElementById("statusBar");
+  const table = document.getElementById("vaTable");
+  const thead = table.querySelector("thead");
+  const tbody = table.querySelector("tbody");
+
+  /* -----------------------------
+   * Build table header
+   * ----------------------------- */
+  function buildHeader(columns) {
+    thead.innerHTML = "";
+    const tr = document.createElement("tr");
+
+    columns.forEach(col => {
+      const th = document.createElement("th");
+      th.textContent = col.label || col.name;
+      tr.appendChild(th);
+    });
+
+    thead.appendChild(tr);
+  }
+
+  /* -----------------------------
+   * Build table body
+   * ----------------------------- */
+  function buildBody(rows) {
+    tbody.innerHTML = "";
+
+    rows.forEach(row => {
+      const tr = document.createElement("tr");
+
+      row.forEach(cell => {
+        const td = document.createElement("td");
+        td.textContent = cell === null ? "" : cell;
+        tr.appendChild(td);
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* -----------------------------
+   * Handle incoming VA data
+   * ----------------------------- */
+  function whenDataComes(message) {
+
+    /* No data assignment */
+    if (!message || !message.data || !message.data.columns) {
+      statusBar.textContent = "No assignment";
+      table.style.display = "none";
+      return;
+    }
+
+    /* Data assigned */
+    const rows = message.data.data || [];
+    statusBar.textContent = "Data assigned";
+
+    if (rows.length === 0) {
+      table.style.display = "none";
+      return;
+    }
+
+    /* Data available */
+    statusBar.textContent = "Data available";
+    table.style.display = "table";
+
+    buildHeader(message.data.columns);
+    buildBody(rows);
+  }
+
+  /* -----------------------------
+   * Initialize VA integration
+   * ----------------------------- */
+/*   
+  va.messagingUtil.setOnDataReceivedCallback(whenDataComes);
+  va.contentUtil.setupResizeListener(() => {});
+  */
+  
+  if (window.addEventListener) {
+       // For standards-compliant web browsers
+       window.addEventListener("message", onMessage, false);
+   } else {
+       window.attachEvent("onmessage", onMessage);
+   }
+   
+// Retrieve data and begin processing
+   function onMessage(event) {
+       if (event && event.data)
+       {
+           //process event.data
+		   statusBar.textContent = "Something happend";
+       }
+   }   
+</script>
+
+</body>
+</html>
+``
