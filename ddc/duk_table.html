@@ -17,6 +17,17 @@
       background-color: #f4f6f8;
     }
 
+    /* Status bar */
+    #statusBar {
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #1f2937;
+      background-color: #e5e7eb;
+      border-radius: 6px;
+    }
+
     .message {
       display: none;
       align-items: center;
@@ -64,6 +75,8 @@
   </style>
 </head>
 <body>
+  <!-- Always visible status text -->
+  <div id="statusBar">No assignment</div>
 
   <!-- Messages -->
   <div id="assignMessage" class="message">Assign a data first.</div>
@@ -76,6 +89,7 @@
   </table>
 
 <script>
+  const statusBar = document.getElementById("statusBar");
   const table = document.getElementById("vaTable");
   const thead = table.querySelector("thead");
   const tbody = table.querySelector("tbody");
@@ -171,17 +185,20 @@
    * ----------------------------- */
   function onDataReceived(message) {
     if (!message || !message.data || !message.data.columns) {
+	  statusBar.textContent = "No assignment";
       showAssignMessage();
       return;
     }
 
     const rows = message.data.data || [];
+    statusBar.textContent = "Data assigned";
 
     if (rows.length === 0) {
       showNoDataMessage();
       return;
     }
 
+    statusBar.textContent = "Data available";
     showTable();
     buildHeader(message.data.columns);
     buildBody(rows);
@@ -193,8 +210,9 @@
    * ----------------------------- */
   showNoDataMessage();
   <!-- va.messagingUtil.setOnDataMessage(onDataReceived); -->
-   va.messagingUtil.setOnDataReceivedCallback(onDataReceived); 
   <!-- va.messagingUtil.setOnDataReceived(onDataReceived); -->
+  va.messagingUtil.setOnDataReceivedCallback(onDataReceived); 
+  
   va.contentUtil.setupResizeListener(() => {});
 </script>
 
